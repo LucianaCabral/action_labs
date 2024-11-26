@@ -1,7 +1,6 @@
-# action_labs
-
-🚀 Challenge action Labs
-## :pushpin:  Sobre o Projeto :construction:
+#  Challenge action_labs 🚀
+ 
+##   Sobre o Projeto :construction:
 
 # Exchange Rate App 💵
 
@@ -26,13 +25,13 @@ Para isso, utilizamos o arquivo `.env`.
 
 2. No arquivo `.env`, adicione a chave da sua API da seguinte forma:
 
-   ```bash
+   ```
    API_KEY=SuaChaveDaAPI
    
    ```
 
 ## IDE e versões utilizadas:
-Este projeto foi desenvolvido em Android Studio e Visual Studio Code :
+Este projeto foi desenvolvido em Android Studio versão:
 Ladybug | 2024.2.1 Patch 2 Build #AI-242.23339.11.2421.12550806, built on October 24, 2024
 
 ## Arquitetura
@@ -61,10 +60,7 @@ As principais camadas são:
 
 
 ## Screenhots
-
-
-<img src = "screenshots/first.png" width ="200" height="480"> 
-<img src = "screenshots/second.png" width ="200" height="480"> 
+<img src = "screenshots/first.png" width ="200" height="480">  
 
 ## Considerações(A serem implementadas)
 Próximas etapas:  testes unitários, goldens testes e componentização.
