@@ -1,6 +1,7 @@
 class StringPath {
   static const String errorMessage = 'Ops! Algo está errado';
   static const String feedbackMessage = 'Opa! Este valor não é valor válido';
+  static const String feedbackMessageInout = 'Que tal adicionar uma moeda?';
   static const String dateFormat = 'dd/MM/yyyy - HH:mm';
   static const String title = 'BRL Exchange Rate';
   static const String labelText = 'Enter the currency code';
