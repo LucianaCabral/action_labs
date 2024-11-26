@@ -1,125 +1,275 @@
+import 'package:action_labs/features/currencies/presentation/resources/strings_path.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'features/currencies/core/di/injection.dart';
+import 'features/currencies/presentation/bloc/current_exchange_rate_bloc.dart';
+import 'features/currencies/presentation/bloc/current_exchange_rate_event.dart';
+import 'features/currencies/presentation/bloc/current_exchange_rate_state.dart';
+import 'features/currencies/presentation/utils/hide_keyboard.dart';
+import 'features/currencies/presentation/widgets/exchange_rate_header.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await setupDependencies();
+
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => getIt<CurrentExchangeRateBloc>()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.white,
+        statusBarIconBrightness: Brightness.dark,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    );
+
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: ExchangeRateScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class ExchangeRateScreen extends StatefulWidget {
+  const ExchangeRateScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _ExchangeRateScreenState createState() => _ExchangeRateScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ExchangeRateScreenState extends State<ExchangeRateScreen> {
+  final TextEditingController _currencyController = TextEditingController();
+  final TextEditingController _resultController = TextEditingController();
+  bool _isLoading = false;
+  bool _showResult = false;
+  String _enteredCurrency = '';
 
-  void _incrementCounter() {
+  void _searchExchangeRate() {
+    if (_currencyController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(StringPath.errorConnection)),
+      );
+      return;
+    }
+
+    hideKeyboard(context);
+
+    final fromCurrency = _currencyController.text.trim().toUpperCase();
+    BlocProvider.of<CurrentExchangeRateBloc>(context).add(
+      LoadCurrentExchangeRate(fromSymbol: fromCurrency, toSymbol: 'BRL'),
+    );
+
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _isLoading = true;
+      _showResult = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final String currentDateTime =
+        DateFormat(StringPath.dateFormat).format(DateTime.now());
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Header
+              ExchangeRateHeader(),
+              const SizedBox(height: 8),
+              // Currency Code Input
+              SizedBox(
+                width: double.infinity,
+                child: Container(
+                  color: const Color(0x00f4f4f4),
+                  child: TextField(
+                    controller: _currencyController,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                    ),
+                    decoration: const InputDecoration(
+                      filled: true,
+                      fillColor: Colors.grey,
+                      labelText: StringPath.labelText,
+                      labelStyle: TextStyle(
+                        color: Colors.black,
+                      ),
+                      border: InputBorder.none,
+                      floatingLabelStyle: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 16,
+                      ),
+                      focusedBorder: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Search Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFF07B0FB),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                  onPressed: _isLoading ? null : _searchExchangeRate,
+                  child: BlocConsumer<CurrentExchangeRateBloc,
+                      CurrentExchangeRateState>(
+                    listener: (context, state) {
+                      if (state is CurrentExchangeRateLoaded) {
+                        setState(() {
+                          _isLoading = false;
+                          _showResult = true;
+                          _enteredCurrency =
+                              _currencyController.text.trim().toUpperCase();
+                          final formatter = NumberFormat.currency(
+                              locale: StringPath.stringLocale,
+                              symbol: 'R\$',
+                              decimalDigits: 2);
+                          _resultController.text =
+                              formatter.format(state.exchangeRate.exchangeRate);
+                        });
+                      } else if (state is CurrentExchangeRateError) {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text(StringPath.errorConnection)),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      if (_isLoading) {
+                        return const CircularProgressIndicator(
+                          color: Colors.white,
+                        );
+                      }
+                      return const Text(
+                        StringPath.buttonResult,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                          fontFamily: 'Roboto',
+                          height: 30 / 24,
+                        ),
+                        textAlign: TextAlign.center,
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Result Section
+              if (_showResult)
+                Column(
+                  children: [
+                    const Divider(color: Colors.grey, thickness: 1),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            StringPath.headerResult,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontFamily: 'Roboto',
+                              fontSize: 18,
+                              height: 28 / 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                currentDateTime,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                '$_enteredCurrency/BRL',
+                                style: const TextStyle(
+                                  color: Color(0xFF07B0FB),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Roboto',
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF07B0FB).withOpacity(0.1),
+                          borderRadius: BorderRadius.zero,
+                        ),
+                        child: TextField(
+                          controller: _resultController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                          ),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF07B0FB),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

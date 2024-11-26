@@ -3,7 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:retrofit/error_logger.dart';
 import 'package:retrofit/http.dart';
 
-import '../../../currencies/data/models/current_exchange_rate_response.dart';
+import '../../data/models/current_exchange_rate_response.dart';
 part 'exchange_rate_service.g.dart';
 
 @JsonSerializable()
