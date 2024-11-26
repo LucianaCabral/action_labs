@@ -1,8 +1,9 @@
-import '../../domain/entity/exchange_rate_current.dart';
-import '../../domain/repository/current_exchange_rate_repository.dart';
+import '../../../domain/entity/exchange_rate_current.dart';
+import '../../../domain/repository/current_exchange_rate_repository.dart';
 import '../source/current_exchange_rate_data_source.dart';
 
-class CurrentExchangeRateRepositoryImpl implements CurrentExchangeRateRepository {
+class CurrentExchangeRateRepositoryImpl
+    implements CurrentExchangeRateRepository {
   final CurrentExchangeRateDataSource remoteDataSource;
 
   CurrentExchangeRateRepositoryImpl({
@@ -14,13 +15,13 @@ class CurrentExchangeRateRepositoryImpl implements CurrentExchangeRateRepository
       {required String fromSymbol, required String toSymbol}) async {
     try {
       final ExchangeRateCurrent response =
-      await remoteDataSource.getExchangeRateCurrent(
+          await remoteDataSource.getExchangeRateCurrent(
         fromSymbol,
         toSymbol,
       );
-           return response;
+      return response;
     } catch (e) {
-      throw Exception('Exception: $e');
+      throw Exception(': $e');
     }
   }
 }

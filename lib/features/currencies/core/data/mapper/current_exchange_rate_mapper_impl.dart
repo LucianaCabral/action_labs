@@ -1,4 +1,4 @@
-import '../../domain/entity/exchange_rate_current.dart';
+import '../../../domain/entity/exchange_rate_current.dart';
 import '../models/current_exchange_rate_response.dart';
 import 'current_exchange_rate_mapper.dart';
 
